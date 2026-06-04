@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>Employee Management</title>
+
+<style>
+
+body{
+
+    font-family:Arial;
+    background:linear-gradient(to right,#74ebd5,#9face6);
+    margin:0;
+    padding:0;
+}
+
+h1{
+
+    text-align:center;
+    color:white;
+    margin-top:20px;
+}
+
+.container{
+
+    width:500px;
+    margin:30px auto;
+    background:white;
+    padding:25px;
+    border-radius:10px;
+    box-shadow:0px 0px 10px gray;
+}
+
+input{
+
+    width:100%;
+    padding:10px;
+    margin-top:10px;
+    border-radius:5px;
+    border:1px solid gray;
+    box-sizing:border-box;
+}
+
+button{
+
+    width:100%;
+    padding:10px;
+    margin-top:10px;
+    background:#4CAF50;
+    color:white;
+    border:none;
+    border-radius:5px;
+    cursor:pointer;
+    font-size:16px;
+}
+
+button:hover{
+
+    background:#45a049;
+}
+
+table{
+
+    width:100%;
+    margin-top:20px;
+    border-collapse:collapse;
+}
+
+table th, table td{
+
+    border:1px solid black;
+    padding:10px;
+    text-align:center;
+}
+
+#result{
+
+    margin-top:15px;
+    background:#f1f1f1;
+    padding:10px;
+    border-radius:5px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h1>Employee Management System</h1>
+
+<div class="container">
+
+    <h3>Add / Update Employee</h3>
+
+    <input type="hidden" id="id">
+
+    <input type="text" id="name" placeholder="Enter Name">
+
+    <input type="number" id="salary" placeholder="Enter Salary">
+
+    <button onclick="addEmployee()">
+        Add Employee
+    </button>
+
+    <button onclick="updateEmployee()">
+        Update Employee
+    </button>
+
+    <hr>
+
+    <h3>Get Employee By ID</h3>
+
+    <input type="number" id="empId" placeholder="Enter Employee ID">
+
+    <button onclick="getEmployee()">
+        Get Employee
+    </button>
+
+    <div id="result"></div>
+
+    <table>
+
+        <thead>
+
+            <tr>
+
+                <th>ID</th>
+                <th>Name</th>
+                <th>Salary</th>
+                <th>Action</th>
+
+            </tr>
+
+        </thead>
+
+        <tbody id="tbody">
+
+        </tbody>
+
+    </table>
+
+</div>
+
+<script>
+
+const BASE_URL="/employee1";
+
+
+
+// LOAD ALL EMPLOYEES
+function getAllEmployee(){
+
+    fetch(BASE_URL + "/getallemp1")
+
+    .then(response => response.json())
+
+    .then(data => {
+
+        let rows="";
+
+        data.forEach(emp => {
+
+            rows += `
+
+            <tr>
+
+                <td>${emp.id}</td>
+
+                <td>${emp.name}</td>
+
+                <td>${emp.salary}</td>
+
+                <td>
+
+                    <button onclick="editEmployee(${emp.id},'${emp.name}',${emp.salary})">
+                        Edit
+                    </button>
+
+                    <button onclick="deleteEmployee(${emp.id})">
+                        Delete
+                    </button>
+
+                </td>
+
+            </tr>
+
+            `;
+        });
+
+        document.getElementById("tbody").innerHTML = rows;
+    })
+
+    .catch(error => {
+
+        console.log(error);
+    });
+}
+
+
+
+// ADD EMPLOYEE
+function addEmployee(){
+
+    let name=document.getElementById("name").value.trim();
+
+    let salary=document.getElementById("salary").value.trim();
+
+    if(name==="" || salary===""){
+
+        alert("Please Fill All Fields");
+        return;
+    }
+
+    let empData={
+
+        name:name,
+        salary:Number(salary)
+    };
+
+    fetch(BASE_URL + "/addemp1",{
+
+        method:"POST",
+
+        headers:{
+            "Content-Type":"application/json"
+        },
+
+        body:JSON.stringify(empData)
+
+    })
+
+    .then(response => response.text())
+
+    .then(data => {
+
+        alert(data);
+
+        clearFields();
+
+        getAllEmployee();
+    })
+
+    .catch(error => {
+
+        console.log(error);
+    });
+}
+
+
+
+// GET EMPLOYEE BY ID
+function getEmployee(){
+
+    let id=document.getElementById("empId").value;
+
+    if(id===""){
+
+        alert("Please Enter ID");
+        return;
+    }
+
+    fetch(BASE_URL + "/getemp1byid/" + id)
+
+    .then(response => response.json())
+
+    .then(data => {
+
+        if(data && data.id){
+
+            document.getElementById("result").innerHTML =
+
+                "ID : " + data.id + "<br>" +
+                "Name : " + data.name + "<br>" +
+                "Salary : " + data.salary;
+
+        }else{
+
+            document.getElementById("result").innerHTML =
+                "Employee Not Found";
+        }
+    })
+
+    .catch(error => {
+
+        document.getElementById("result").innerHTML =
+            "Employee Not Found";
+    });
+}
+
+
+
+// DELETE EMPLOYEE
+function deleteEmployee(id){
+
+    let confirmDelete = confirm("Are You Sure To Delete?");
+
+    if(confirmDelete){
+
+        fetch(BASE_URL + "/delete/" + id,{
+
+            method:"DELETE"
+        })
+
+        .then(response => response.text())
+
+        .then(data => {
+
+            alert(data);
+
+            getAllEmployee();
+        })
+
+        .catch(error => {
+
+            console.log(error);
+        });
+    }
+}
+
+
+
+// EDIT EMPLOYEE
+function editEmployee(id,name,salary){
+
+    document.getElementById("id").value=id;
+
+    document.getElementById("name").value=name;
+
+    document.getElementById("salary").value=salary;
+}
+
+
+
+// UPDATE EMPLOYEE
+function updateEmployee(){
+
+    let id=document.getElementById("id").value;
+
+    let name=document.getElementById("name").value.trim();
+
+    let salary=document.getElementById("salary").value.trim();
+
+    if(id===""){
+
+        alert("Please Select Employee");
+        return;
+    }
+
+    let empData={
+
+        name:name,
+        salary:Number(salary)
+    };
+
+    fetch(BASE_URL + "/update/" + id,{
+
+        method:"PUT",
+
+        headers:{
+            "Content-Type":"application/json"
+        },
+
+        body:JSON.stringify(empData)
+    })
+
+    .then(response => response.text())
+
+    .then(data => {
+
+        alert(data);
+
+        clearFields();
+
+        getAllEmployee();
+    })
+
+    .catch(error => {
+
+        console.log(error);
+    });
+}
+
+
+
+// CLEAR FIELDS
+function clearFields(){
+
+    document.getElementById("id").value="";
+
+    document.getElementById("name").value="";
+
+    document.getElementById("salary").value="";
+}
+
+
+
+// AUTO LOAD
+getAllEmployee();
+
+</script>
+
+</body>
+</html>
